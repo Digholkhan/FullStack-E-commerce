@@ -1,0 +1,194 @@
+import { useEffect, useState } from "react";
+import Container from "./Container";
+import Flex from "./Flex";
+import Logo from '../assets/Logo.png'
+import ListUl from "./ListUl";
+import ListLi from "./ListLi";
+import { CiHeart } from "react-icons/ci";
+import { IoCartOutline } from "react-icons/io5";
+import { CiSearch } from "react-icons/ci";
+import { AiOutlineBars } from "react-icons/ai";
+import { NavLink, useNavigate } from "react-router";
+import { useSelector, useDispatch } from 'react-redux';
+import { logout, updateUser } from "../Slices/authSlice";
+import { productReducer } from "../Slices/ProductSlices";
+import axios from "axios";
+import UserAvatar from "./UserAvatar";
+
+
+const Navbar = () => {
+  const {user} = useSelector(state => state.auth)
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  
+  const [show, setShow] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const handleClick = () => {
+    setShow(!show)
+  }
+
+  const CartIcon = useSelector((state) => state.allProduct.cart)
+  // console.log(CartIcon);
+  const wishlistIcon = useSelector((state) => state.allProduct.wishlist)
+  // console.log(wishlistIcon);
+
+
+  const navActive = ({ isActive }) =>
+    isActive
+      ? "lg:text-[#DB4444] font-semibold"
+      : "lg:text-[#000000] hover:text-[#DB4444]";
+
+
+  const products = useSelector((state) => state.allProduct.value) || []
+
+  useEffect(() => {
+    axios.get(`${import.meta.env.VITE_AUTH_URL}/product`)
+      .then(({ data }) => dispatch(productReducer(data.products || [])))
+      .catch(console.log)
+  }, [dispatch])
+
+  useEffect(() => {
+    if (!user?.id || user?.avatar) return;
+
+    axios
+      .get(`${import.meta.env.VITE_AUTH_URL}/profile/${user.id}`, {
+        headers: { Authorization: user.accesstoken },
+      })
+      .then(({ data }) => {
+        if (data.profile) {
+          dispatch(updateUser({
+            name: data.profile.name,
+            avatar: data.profile.avatar || "",
+          }));
+        }
+      })
+      .catch(console.log);
+  }, [user?.id, user?.avatar, user?.accesstoken, dispatch]);
+  // console.log(products);
+  const [search, setSearch] = useState('');
+  const [filteredProduct, setFilteredProduct] = useState([]);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearch(value);
+    if (value.trim() === "") {
+      setFilteredProduct([]);
+    } else {
+      setFilteredProduct(products.filter((item) => item.title?.toLowerCase().includes(value.toLowerCase())));
+    }
+  }
+
+  const handleLogout = ()=> {
+    dispatch(logout())
+    navigate("/login")
+    setShowUserDropdown(false)
+  }
+
+  return (
+    <>
+      <nav className="lg:pt-10 pt-4 pb-4 border-b-1 border-secondary relative z-10">
+        <Container>
+          <Flex className='flex justify-between items-center'>
+            <div className="w-[25%] pl-2.5 lg:pl-0">
+              <NavLink to='/'>
+                <img src={Logo} alt="" />
+              </NavLink>
+            </div>
+
+            <div className={`${show ? 'block' : 'hidden'} lg:flex absolute justify-between items-center lg:text-black top-15 lg:static lg:bg-transparent text-white bg-black lg:w-[75%] w-full pl-4 lg:pl-0 py-4 lg:py-0`}>
+              <div>
+                <ListUl className='flex-wrap lg:flex lg:gap-12 leading-6 lg:leading-0 hover:border-none cursor-pointer z-auto'>
+                  <NavLink to='/' end className={navActive}>
+                    <ListLi className='customize'> home</ListLi>
+                  </NavLink>
+                  <NavLink to="/shop" className={navActive}>
+                    <ListLi className='customize'>shop</ListLi>
+                  </NavLink>
+                  <NavLink to="/contact" className={navActive}>
+                    <ListLi className="customize">contact</ListLi>
+                  </NavLink>
+                  <NavLink to="/about" className={navActive}>
+                    <ListLi className="customize">about</ListLi>
+                  </NavLink>
+                  {!user && <NavLink to="/signup" className={navActive}>
+                    <ListLi className="customize">sign up</ListLi>
+                  </NavLink>}
+                </ListUl>
+              </div>
+
+              <div className="flex-wrap lg:flex gap-6">
+                <div className="relative">
+                  <input
+                    onChange={handleSearchChange}
+                    type='search'
+                    value={search}
+                    className="w-[243px] bg-[#F5F5F5] text-black mt-3.5 lg:mt-0 text-xs py-2.5 pl-5 pr-10 rounded-full lg:rounded-sm"
+                    placeholder="What are you looking for?"
+                  />
+                  <CiSearch className="absolute lg:top-1.5 lg:right-2.5 top-5 right-36 text-black text-2xl cursor-pointer" />
+
+                  <div className='absolute bg-white top-12 lg:w-[243px] w-[90%] max-h-60 overflow-y-auto'>
+                    {filteredProduct.map((item) => (
+                      <div className='flex gap-3 items-center border-b-2 border-gray-200'
+                        onClick={() => {
+                          navigate(`/productdetails/${item._id || item.id}`);
+                          setSearch('')
+                          setFilteredProduct([])
+                        }}
+                      >
+                        <img src={item.images?.[0]?.url || item.thumbnail} alt="" className="w-10 h-10" />
+                        {item.title}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex lg:static lg:top-0 absolute top-39 right-2.5 items-center text-2xl lg:gap-4 gap-1.5 cursor-pointer">
+                  <NavLink to="/wishlist">
+                    <div className="relative ">
+                      <CiHeart />
+                      <h2 className="absolute w-5 h-5 -top-3 left-3 rounded-full bg-primary text-white flex justify-center items-center text-xs">{wishlistIcon.length}</h2>
+                    </div>
+                  </NavLink>
+
+                  <NavLink to='/attocart'>
+                    <div className="relative ">
+                      <IoCartOutline />
+                      <h2 className="absolute w-5 h-5 -top-3 left-3 rounded-full bg-primary text-white flex justify-center items-center text-xs">{CartIcon.length}</h2>
+                    </div>
+                  </NavLink>
+
+                  {user && <div className="p-1 relative">
+                    <button type="button" className="cursor-pointer" onClick={()=> setShowUserDropdown(!showUserDropdown)}>
+                      <UserAvatar src={user.avatar} name={user.name || user.email} size="sm" />
+                    </button>
+                    {showUserDropdown && <ul className="absolute top-10 right-0 z-10 p-2 bg-slate-300 space-y-2 min-w-36">
+                      <li>
+                        <NavLink to="/profile" onClick={() => setShowUserDropdown(false)}>Profile</NavLink>
+                      </li>
+                      {user?.role === "admin" && (
+                        <li>
+                          <NavLink to="/dashboard" onClick={() => setShowUserDropdown(false)}>Dashboard</NavLink>
+                        </li>
+                      )}
+                      <li>
+                        <button onClick={handleLogout} className="text-red-600 cursor-pointer">Logout</button>
+                      </li>
+
+                    </ul>}
+                  </div>}
+                </div>
+                
+              </div>
+            </div>
+
+          </Flex>
+          
+          <AiOutlineBars onClick={handleClick} className="lg:hidden block text-3xl pl-2.5 text-center right-2.5 top-2.5 absolute cursor-pointer" />
+        </Container>
+      </nav >
+    </>
+  )
+}
+
+export default Navbar;

@@ -1,0 +1,82 @@
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+
+import { createBrowserRouter, RouterProvider } from "react-router";
+import RootLayout from "./layout/RootLayout.jsx";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Shop from "./pages/Shop";
+import Contact from "./pages/Contact";
+import SignUp from "./pages/SignUp";
+import Login from "./pages/Login";
+import ProductDetails from "./pages/ProductDetails";
+import { Provider } from "react-redux";
+import { store } from "./Store";
+import AtToCart from "./pages/AtToCart";
+import Account from "./pages/Account";
+import Profile from "./pages/Profile";
+import CheckOut from "./pages/CheckOut";
+import Error from "./pages/Error";
+import Wishlist from "./pages/Wishlist";
+import { ToastContainer } from "react-toastify";
+import firebaseConfig from "../src/FirebaseConfig.js";
+import Emailvarification from "./pages/Emailvarification.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import Dashboard from "./dashboard/Dashboard.jsx";
+import DashboardLayout from "./layout/DashboardLayout.jsx";
+import CategoryForm from "./components/dashboard/CategoryForm.jsx";
+import ProductForm from "./components/dashboard/ProductForm.jsx";
+import Overview from "./dashboard/Overview.jsx";
+import UsersPanel from "./dashboard/UsersPanel.jsx";
+import SiteContent from "./dashboard/SiteContent.jsx";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    Component: RootLayout,
+    children: [
+      { index: true, Component: Home },
+      { path: "about", Component: About },
+      { path: "shop", Component: Shop },
+      { path: "contact", Component: Contact },
+      { path: "signup", Component: SignUp },
+      { path: "/:token", Component: Emailvarification },
+      { path: "login", Component: Login },
+      { path: "forgot-password", Component: ForgotPassword },
+      { path: "productdetails/:id", Component: ProductDetails },
+      { path: "attocart", Component: AtToCart },
+      { path: "account", Component: Account },
+      { path: "profile", Component: Profile },
+      { path: "checkout", Component: CheckOut },
+      { path: "error", Component: Error },
+      { path: "wishlist", Component: Wishlist },
+    ],
+  },
+  {
+    path: "/dashboard",
+    Component: DashboardLayout,
+    children: [
+      {
+        path: "",
+        Component: Dashboard,
+        children: [
+          { index: true, Component: Overview },
+          { path: "category", Component: CategoryForm },
+          { path: "products", Component: ProductForm },
+          { path: "users", Component: UsersPanel },
+          { path: "content", Component: SiteContent },
+        ],
+      },
+    ],
+  },
+]);
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <ToastContainer />
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
+  </StrictMode>,
+);
